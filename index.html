@@ -34,7 +34,7 @@ input,select{width:100%;background:var(--bg2);color:var(--w);border:2px solid #4
 .bar input{max-width:260px;margin-left:auto}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:26px}
 .card{background:var(--w);color:#000;padding:14px;border-radius:2px;
- -webkit-mask:radial-gradient(circle 6px at 6px 6px,#0000 98%,#000) -6px -6px/12px 12px;mask:radial-gradient(circle 6px at 6px 6px,#0000 98%,#000) -6px -6px/12px 12px;
+ outline:2px dashed #bdbdbd;outline-offset:-7px;
  transform:rotate(var(--r));transition:transform .2s}
 .card:hover{transform:rotate(0) translateY(-4px)}
 .card:nth-child(odd){--r:-1.2deg}.card:nth-child(even){--r:1deg}
@@ -72,6 +72,22 @@ label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut)}
 .ok{color:var(--g)!important}
 .wa{display:block;text-align:center;background:#25D366;color:#000;font-weight:600;text-decoration:none;padding:14px;border-radius:4px;margin-top:10px}
 .empty{color:var(--mut);padding:20px 0}
+#pd{position:fixed;inset:0;z-index:7;background:var(--bg);overflow-y:auto;display:none;padding-top:env(safe-area-inset-top,0px)}
+#pd.on{display:block}
+.pdi{max-width:1000px;margin:auto;padding:16px 5vw 60px}
+.back{background:none;border:0;color:var(--g);font:600 15px Montserrat,sans-serif;padding:10px 0;cursor:pointer}
+.pdg{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:28px;margin-top:8px}
+.big{background:#f1f1f1;aspect-ratio:1;display:grid;place-items:center;border-radius:4px;overflow:hidden}
+.big img{width:100%;height:100%;object-fit:contain}.big svg{width:70%}
+.th{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.th button{width:64px;height:64px;padding:0;border:2px solid #444;border-radius:4px;background:#f1f1f1;cursor:pointer;overflow:hidden}
+.th button[aria-current=true]{border-color:var(--g)}
+.th img{width:100%;height:100%;object-fit:cover}
+.pdg h1{font-size:clamp(34px,6vw,52px)}
+.pp{font:600 28px Montserrat,sans-serif;margin:10px 0}
+.pdsc{color:var(--mut);white-space:pre-line}
+.sz{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.pe{color:#ff6b6b;min-height:22px;margin:4px 0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
 </style>
 </head>
@@ -103,6 +119,7 @@ label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut)}
 
 <div id="ov"></div>
 <aside id="dr" aria-label="Carrito"></aside>
+<div id="pd" role="dialog" aria-label="Detalle del producto"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script>
@@ -135,11 +152,11 @@ function renderCats(){
 function renderGrid(){
  const q=($("#q")?.value||"").toLowerCase();
  const l=PRODUCTS.filter(p=>(cat==="Todos"||p.c===cat)&&p.n.toLowerCase().includes(q));
- $("#grid").innerHTML=l.length?l.map(p=>`<div class="card"><div class="pic" style="background:#f1f1f1">${p.img?`<img src="${p.img}" alt="${p.n}" style="width:100%;height:100%;object-fit:cover">`:shirt(p.a,p.b)}</div><h3>${p.n}</h3><div class="price">${fmt(p.p)}</div>${soldOut(p)?`<div class="price" style="color:#c00;margin-top:10px">Agotado</div>`:""}<div class="row" ${soldOut(p)?'style="display:none"':""}><select aria-label="Talle" id="s${p.id}">${Object.entries(p.stock||{S:1,M:1,L:1,XL:1}).filter(([s,q])=>q>0).map(([s])=>`<option>${s}</option>`).join("")||"<option disabled>Sin stock</option>"}</select><button class="add" data-id="${p.id}">Agregar</button></div></div>`).join(""):`<p class="empty">No encontramos productos con esa búsqueda.</p>`;
+ $("#grid").innerHTML=l.length?l.map(p=>`<div class="card"><a href="#/p/${p.id}" aria-label="Ver ${p.n}" style="display:block"><div class="pic" style="background:#f1f1f1">${p.img?`<img src="${p.img}" alt="${p.n}" style="width:100%;height:100%;object-fit:contain">`:shirt(p.a,p.b)}</div></a><h3><a href="#/p/${p.id}" style="text-decoration:none">${p.n}</a></h3><div class="price">${fmt(p.p)}</div>${soldOut(p)?`<div class="price" style="color:#c00;margin-top:10px">Agotado</div>`:""}<div class="row" ${soldOut(p)?'style="display:none"':""}><select aria-label="Talle" id="s${p.id}">${Object.entries(p.stock||{S:1,M:1,L:1,XL:1}).filter(([s,q])=>q>0).map(([s])=>`<option>${s}</option>`).join("")||"<option disabled>Sin stock</option>"}</select><button class="add" data-id="${p.id}">Agregar</button></div></div>`).join(""):`<p class="empty">No encontramos productos con esa búsqueda.</p>`;
  document.querySelectorAll(".add").forEach(b=>b.onclick=()=>add(+b.dataset.id));
 }
-function add(id){
- const s=$("#s"+id).value;if(!s||s==="Sin stock")return;const i=cart.find(x=>x.id===id&&x.s===s);
+function add(id){const s=$("#s"+id).value;addTo(id,s)}
+function addTo(id,s){if(!s||s==="Sin stock")return;const i=cart.find(x=>x.id===id&&x.s===s);
  const mx=(PRODUCTS.find(p=>p.id===id).stock||{})[s];if(mx!=null&&(i?i.q:0)>=mx){alert("No hay más stock de ese talle.");return}
  i?i.q++:cart.push({id,s,q:1});
  save();step="cart";draw();openDr();
@@ -181,13 +198,31 @@ function draw(){
 }
 $("#open").onclick=()=>{if(step==="done")step="cart";draw();openDr()};
 $("#ov").onclick=closeDr;
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let det=null,sel=null,gi=0;
+function route(){
+ const m=location.hash.match(/^#\/p\/(\d+)$/),el=$("#pd");
+ if(!m){el.classList.remove("on");document.body.style.overflow="";return}
+ det=PRODUCTS.find(p=>p.id==m[1]);
+ if(!det){location.hash="";return}
+ sel=null;gi=0;drawP();el.classList.add("on");el.scrollTop=0;document.body.style.overflow="hidden";
+}
+function drawP(){
+ const p=det,el=$("#pd"),av=Object.entries(p.stock||{S:1,M:1,L:1,XL:1}).filter(([s,q])=>q>0),im=p.imgs||[];
+ el.innerHTML=`<div class="pdi"><button class="back" id="bk2">← Volver al catálogo</button><div class="pdg"><div><div class="big">${im.length?`<img src="${im[gi]}" alt="${esc(p.n)}">`:shirt(p.a,p.b)}</div>${im.length>1?`<div class="th">${im.map((u,i)=>`<button data-g="${i}" aria-label="Foto ${i+1}" ${i===gi?'aria-current="true"':""}><img src="${u}" alt=""></button>`).join("")}</div>`:""}</div><div><h1>${esc(p.n)}</h1><p class="pp">${fmt(p.p)}</p>${p.d?`<p class="pdsc">${esc(p.d)}</p>`:""}${av.length?`<label>Talle</label><div class="sz">${av.map(([s])=>`<button class="chip" data-z="${s}" aria-pressed="${sel===s}">${s}</button>`).join("")}</div><p class="pe" id="pe"></p><button class="cta" id="pa" style="width:100%;border:0">Agregar al carrito</button>`:`<p class="pp" style="color:#ff6b6b">Agotado</p>`}</div></div></div>`;
+ $("#bk2").onclick=()=>{location.hash=""};
+ el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{gi=+b.dataset.g;drawP()});
+ el.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>{sel=b.dataset.z;drawP()});
+ $("#pa")&&($("#pa").onclick=()=>{if(!sel){$("#pe").textContent="Elegí un talle primero.";return}addTo(p.id,sel)});
+}
 async function loadData(){try{
  const [pr,st]=await Promise.all([sb.from("products").select("*").eq("active",true).order("featured",{ascending:false}).order("id",{ascending:false}),sb.from("settings").select("*").eq("id",1).single()]);
  if(st.data)CFG={whatsapp:st.data.whatsapp,alias:st.data.alias,cvu:st.data.cvu,titular:st.data.holder,envio:st.data.shipping_cost};
- if(pr.data&&pr.data.length)PRODUCTS=pr.data.map(r=>({id:r.id,n:r.name,c:r.category,p:r.price,a:"#52C842",b:"#000",img:(r.images||[])[0],stock:r.stock}));
+ if(pr.data&&pr.data.length)PRODUCTS=pr.data.map(r=>({id:r.id,n:r.name,c:r.category,p:r.price,a:"#52C842",b:"#000",img:(r.images||[])[0],imgs:r.images||[],d:r.description||"",stock:r.stock}));
 }catch(e){}
 cart=cart.filter(i=>PRODUCTS.some(p=>p.id===i.id));save();renderCats();renderGrid();}
-loadData().then(draw);
+loadData().then(()=>{draw();route()});
+window.addEventListener("hashchange",route);
 </script>
 </body>
 </html>
