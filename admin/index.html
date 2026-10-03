@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Panel Wembley</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#121212;--bg2:#1c1c1c;--g:#52C842;--mut:#a8a8a8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:#fff;font:400 15px/1.5 Montserrat,system-ui,sans-serif;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+h1,h2{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;margin:0 0 14px}
+nav{display:flex;gap:8px;align-items:center;padding:12px 4vw;background:#000;border-bottom:3px solid var(--g);flex-wrap:wrap;position:sticky;top:0}
+nav b{font:400 22px Anton,sans-serif;margin-right:auto}nav b i{color:var(--g);font-style:normal}
+.tab{background:none;border:2px solid #444;color:#fff;border-radius:999px;padding:6px 14px;cursor:pointer;font:inherit}
+.tab.on{background:#fff;color:#000;border-color:#fff}
+main{padding:20px 4vw;max-width:900px;margin:auto}
+input,select,textarea{width:100%;background:var(--bg2);color:#fff;border:2px solid #444;border-radius:4px;padding:9px;font:inherit}
+label{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}
+.btn{background:var(--g);color:#000;border:0;border-radius:4px;padding:11px 20px;font:600 15px Montserrat,sans-serif;cursor:pointer;margin-top:14px}
+.btn.sec{background:#333;color:#fff}.btn.del{background:#7a1f1f;color:#fff}
+.box{max-width:380px;margin:12vh auto;padding:0 20px}
+.er{color:#ff6b6b;min-height:20px}
+.row{display:flex;gap:12px;align-items:center;background:var(--bg2);border-radius:6px;padding:10px;margin-bottom:10px}
+.row img,.ph{width:54px;height:54px;object-fit:cover;border-radius:4px;background:#333;flex:none}
+.row .t{flex:1;min-width:0}.row small{color:var(--mut);display:block}
+.off{opacity:.5}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.thumbs div{position:relative}.thumbs img{width:70px;height:70px;object-fit:cover;border-radius:4px}
+.thumbs button{position:absolute;top:-6px;right:-6px;background:#000;color:#fff;border:1px solid #fff;border-radius:50%;width:22px;height:22px;cursor:pointer}
+.chk{display:flex;gap:8px;align-items:center;margin-top:12px;color:#fff}.chk input{width:auto}
+.ord{background:var(--bg2);border-radius:6px;padding:12px;margin-bottom:12px}
+.ord pre{white-space:pre-wrap;font:inherit;color:var(--mut);margin:6px 0}
+.ord a{color:var(--g)}
+:focus-visible{outline:3px solid #EAB308}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const sb=supabase.createClient("https://egtrzvgzairnzclowkxz.supabase.co","sb_publishable_4EwkRJ0C1144cWq0etEdEQ_t6Jf6VRM");
+const $=s=>document.querySelector(s),fmt=v=>"$"+Number(v).toLocaleString("es-AR");
+const SZ=["S","M","L","XL"],STAT=["pendiente","pagado","enviado","entregado","cancelado"];
+let tab="p",ed=null,app$=$("#app");
+
+async function boot(){const{data:{session}}=await sb.auth.getSession();session?shell():login()}
+function login(){
+ app$.innerHTML=`<div class="box"><h1>Panel Wembley</h1><label for="em">Email</label><input id="em" type="email" autocomplete="username"><label for="pw">Contraseña</label><input id="pw" type="password" autocomplete="current-password"><p class="er" id="er"></p><button class="btn" id="in">Entrar</button></div>`;
+ const go=async()=>{const{error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});error?$("#er").textContent="Email o contraseña incorrectos.":shell()};
+ $("#in").onclick=go;$("#pw").onkeydown=e=>e.key==="Enter"&&go();
+}
+function shell(){
+ app$.innerHTML=`<nav><b>WEMBLEY<i>.</i> panel</b><button class="tab" data-t="p">Productos</button><button class="tab" data-t="o">Pedidos</button><button class="tab" data-t="s">Ajustes</button><button class="tab" id="out">Salir</button></nav><main id="m"></main>`;
+ document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;ed=null;view()});
+ $("#out").onclick=async()=>{await sb.auth.signOut();login()};
+ view();
+}
+function view(){
+ document.querySelectorAll("[data-t]").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
+ ({p:prods,o:orders,s:sets})[tab]();
+}
+
+/* ---------- Productos ---------- */
+async function prods(){
+ if(ed)return form();
+ const{data,error}=await sb.from("products").select("*").order("id",{ascending:false});
+ if(error)return $("#m").innerHTML=`<p class="er">No se pudieron cargar los productos: ${error.message}</p>`;
+ $("#m").innerHTML=`<h2>Productos</h2><button class="btn" id="new" style="margin:0 0 14px">+ Nuevo producto</button>`+(data.length?data.map(p=>`<div class="row ${p.active?"":"off"}">${p.images?.[0]?`<img src="${p.images[0]}" alt="">`:`<div class="ph"></div>`}<div class="t"><b>${p.name}</b><small>${p.category} · ${fmt(p.price)} · Stock: ${SZ.map(s=>s+" "+(p.stock?.[s]||0)).join(", ")}${p.active?"":" · Oculto"}</small></div><button class="btn sec" style="margin:0" data-e="${p.id}">Editar</button></div>`).join(""):`<p>Todavía no cargaste productos. Tocá "Nuevo producto" para empezar.</p>`);
+ $("#new").onclick=()=>{ed={images:[],stock:{},active:true};prods()};
+ document.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{ed=data.find(p=>p.id==b.dataset.e);prods()});
+}
+function form(){
+ const p=ed;
+ $("#m").innerHTML=`<h2>${p.id?"Editar":"Nuevo"} producto</h2>
+ <label for="nm">Nombre</label><input id="nm" value="${(p.name||"").replace(/"/g,"&quot;")}">
+ <label for="ct">Categoría (ej: Camisetas, Shorts, Abrigo)</label><input id="ct" value="${p.category||""}">
+ <label for="pr">Precio ($)</label><input id="pr" type="number" min="0" value="${p.price||""}">
+ <label for="ds">Descripción</label><textarea id="ds" rows="3">${p.description||""}</textarea>
+ <label>Stock por talle</label><div class="g4">${SZ.map(s=>`<div><label for="st${s}" style="margin:0">${s}</label><input id="st${s}" type="number" min="0" value="${p.stock?.[s]||0}"></div>`).join("")}</div>
+ <label for="fi">Fotos</label><input id="fi" type="file" accept="image/*" multiple>
+ <div class="thumbs">${(p.images||[]).map((u,i)=>`<div><img src="${u}" alt=""><button data-r="${i}" aria-label="Quitar foto">×</button></div>`).join("")}</div>
+ <label class="chk"><input id="ft" type="checkbox" ${p.featured?"checked":""}>Destacado (aparece primero)</label>
+ <label class="chk"><input id="ac" type="checkbox" ${p.active?"checked":""}>Visible en la tienda</label>
+ <p class="er" id="er"></p>
+ <button class="btn" id="sv">Guardar</button> <button class="btn sec" id="cn">Cancelar</button> ${p.id?`<button class="btn del" id="dl">Eliminar</button>`:""}`;
+ document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{keep();p.images.splice(+b.dataset.r,1);form()});
+ $("#cn").onclick=()=>{ed=null;prods()};
+ $("#sv").onclick=save;
+ $("#dl")&&($("#dl").onclick=async()=>{if(confirm("¿Eliminar este producto? No se puede deshacer.")){await sb.from("products").delete().eq("id",p.id);ed=null;prods()}});
+}
+function keep(){const p=ed;p.name=$("#nm").value;p.category=$("#ct").value;p.price=$("#pr").value;p.description=$("#ds").value;p.stock=Object.fromEntries(SZ.map(s=>[s,+$("#st"+s).value||0]));p.featured=$("#ft").checked;p.active=$("#ac").checked}
+async function save(){
+ keep();const p=ed,imgs=[...(p.images||[])];
+ if(!p.name.trim()||!p.category.trim()||!(+p.price>0))return $("#er").textContent="Completá nombre, categoría y un precio mayor a 0.";
+ $("#sv").disabled=true;$("#sv").textContent="Guardando…";
+ for(const f of $("#fi").files){const path=Date.now()+"-"+f.name.replace(/[^\w.]/g,"_");const{error}=await sb.storage.from("products").upload(path,f);if(!error)imgs.push(sb.storage.from("products").getPublicUrl(path).data.publicUrl)}
+ const row={name:p.name.trim(),category:p.category.trim(),price:+p.price,description:p.description,images:imgs,stock:p.stock,featured:p.featured,active:p.active};
+ const r=p.id?await sb.from("products").update(row).eq("id",p.id):await sb.from("products").insert(row);
+ if(r.error){$("#sv").disabled=false;$("#sv").textContent="Guardar";return $("#er").textContent="Error al guardar: "+r.error.message}
+ ed=null;prods();
+}
+
+/* ---------- Pedidos ---------- */
+async function orders(){
+ const{data,error}=await sb.from("orders").select("*").order("id",{ascending:false}).limit(100);
+ if(error)return $("#m").innerHTML=`<p class="er">No se pudieron cargar los pedidos: ${error.message}</p>`;
+ $("#m").innerHTML=`<h2>Pedidos</h2>`+(data.length?data.map(o=>`<div class="ord"><b>${o.order_no}</b> · ${fmt(o.total)} · ${new Date(o.created_at).toLocaleString("es-AR")}<pre>${o.customer_name} · ${o.phone}\n${o.delivery==="envio"?"Envío: "+o.address:"Retiro en Navarro"}\n${o.items.map(i=>`${i.qty}x ${i.name} (${i.size})`).join("\n")}</pre><a target="_blank" rel="noopener" href="https://wa.me/${o.phone.replace(/\D/g,"")}">Escribir por WhatsApp</a><label for="s${o.id}">Estado</label><select id="s${o.id}" data-o="${o.id}">${STAT.map(s=>`<option ${s===o.status?"selected":""}>${s}</option>`).join("")}</select></div>`).join(""):`<p>Todavía no hay pedidos.</p>`);
+ document.querySelectorAll("[data-o]").forEach(s=>s.onchange=async()=>{const{error}=await sb.from("orders").update({status:s.value}).eq("id",s.dataset.o);if(error)alert("No se pudo cambiar el estado: "+error.message)});
+}
+
+/* ---------- Ajustes ---------- */
+async function sets(){
+ const{data:s,error}=await sb.from("settings").select("*").eq("id",1).single();
+ if(error)return $("#m").innerHTML=`<p class="er">No se pudieron cargar los ajustes: ${error.message}</p>`;
+ $("#m").innerHTML=`<h2>Ajustes</h2>
+ <label for="wa">WhatsApp (con código de país, sin + ni espacios. Ej: 5492227123456)</label><input id="wa" value="${s.whatsapp||""}">
+ <label for="al">Alias</label><input id="al" value="${s.alias||""}">
+ <label for="cv">CVU / CBU</label><input id="cv" value="${s.cvu||""}">
+ <label for="ho">Titular de la cuenta</label><input id="ho" value="${s.holder||""}">
+ <label for="sh">Costo de envío ($)</label><input id="sh" type="number" min="0" value="${s.shipping_cost||0}">
+ <p class="er" id="er"></p><button class="btn" id="sv">Guardar ajustes</button>`;
+ $("#sv").onclick=async()=>{
+  const{error}=await sb.from("settings").update({whatsapp:$("#wa").value.replace(/\D/g,""),alias:$("#al").value.trim(),cvu:$("#cv").value.trim(),holder:$("#ho").value.trim(),shipping_cost:+$("#sh").value||0}).eq("id",1);
+  $("#er").style.color=error?"":"#52C842";$("#er").textContent=error?"Error: "+error.message:"Ajustes guardados.";
+ };
+}
+boot();
+</script>
+</body>
+</html>
