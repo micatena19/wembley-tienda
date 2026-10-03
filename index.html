@@ -123,6 +123,7 @@ const $=s=>document.querySelector(s),fmt=v=>"$"+v.toLocaleString("es-AR");
 let cart=[],cat="Todos",step="cart",order=null;
 try{cart=JSON.parse(localStorage.getItem("wem_cart")||"[]")}catch(e){}
 const save=()=>{try{localStorage.setItem("wem_cart",JSON.stringify(cart))}catch(e){}};
+const soldOut=p=>p.stock&&Object.values(p.stock).every(q=>!(q>0));
 const shirt=(a,b)=>`<svg viewBox="0 0 100 100"><path d="M30 12L12 24l8 18 8-4v50h44V38l8 4 8-18-18-12q-20 14-40 0z" fill="${a}" stroke="#000" stroke-width="2.5"/><path d="M28 56h44v8H28z" fill="${b}"/></svg>`;
 
 function renderCats(){
@@ -134,11 +135,12 @@ function renderCats(){
 function renderGrid(){
  const q=($("#q")?.value||"").toLowerCase();
  const l=PRODUCTS.filter(p=>(cat==="Todos"||p.c===cat)&&p.n.toLowerCase().includes(q));
- $("#grid").innerHTML=l.length?l.map(p=>`<div class="card"><div class="pic" style="background:#f1f1f1">${p.img?`<img src="${p.img}" alt="${p.n}" style="width:100%;height:100%;object-fit:cover">`:shirt(p.a,p.b)}</div><h3>${p.n}</h3><div class="price">${fmt(p.p)}</div><div class="row"><select aria-label="Talle" id="s${p.id}">${Object.entries(p.stock||{S:1,M:1,L:1,XL:1}).filter(([s,q])=>q>0).map(([s])=>`<option>${s}</option>`).join("")||"<option disabled>Sin stock</option>"}</select><button class="add" data-id="${p.id}">Agregar</button></div></div>`).join(""):`<p class="empty">No encontramos productos con esa búsqueda.</p>`;
+ $("#grid").innerHTML=l.length?l.map(p=>`<div class="card"><div class="pic" style="background:#f1f1f1">${p.img?`<img src="${p.img}" alt="${p.n}" style="width:100%;height:100%;object-fit:cover">`:shirt(p.a,p.b)}</div><h3>${p.n}</h3><div class="price">${fmt(p.p)}</div>${soldOut(p)?`<div class="price" style="color:#c00;margin-top:10px">Agotado</div>`:""}<div class="row" ${soldOut(p)?'style="display:none"':""}><select aria-label="Talle" id="s${p.id}">${Object.entries(p.stock||{S:1,M:1,L:1,XL:1}).filter(([s,q])=>q>0).map(([s])=>`<option>${s}</option>`).join("")||"<option disabled>Sin stock</option>"}</select><button class="add" data-id="${p.id}">Agregar</button></div></div>`).join(""):`<p class="empty">No encontramos productos con esa búsqueda.</p>`;
  document.querySelectorAll(".add").forEach(b=>b.onclick=()=>add(+b.dataset.id));
 }
 function add(id){
  const s=$("#s"+id).value;if(!s||s==="Sin stock")return;const i=cart.find(x=>x.id===id&&x.s===s);
+ const mx=(PRODUCTS.find(p=>p.id===id).stock||{})[s];if(mx!=null&&(i?i.q:0)>=mx){alert("No hay más stock de ese talle.");return}
  i?i.q++:cart.push({id,s,q:1});
  save();step="cart";draw();openDr();
 }
@@ -151,7 +153,7 @@ function draw(){
  const d=$("#dr"),x=`<button class="close" aria-label="Cerrar" id="x">×</button>`;
  if(step==="cart"){
   d.innerHTML=x+`<h2>Tu carrito</h2>`+(cart.length?cart.map((i,k)=>{const p=PRODUCTS.find(p=>p.id===i.id);return `<div class="line"><div class="t">${p.n}<small>Talle ${i.s} · ${fmt(p.p)}</small></div><div class="qty"><button data-k="${k}" data-d="-1" aria-label="Menos">−</button> ${i.q} <button data-k="${k}" data-d="1" aria-label="Más">+</button></div></div>`}).join("")+`<div class="tot"><span>Subtotal</span><span>${fmt(total())}</span></div><button class="cta" style="width:100%" id="go">Continuar con la compra</button>`:`<p class="empty">Todavía no agregaste nada. Elegí un producto del catálogo.</p>`);
-  d.querySelectorAll(".qty button").forEach(b=>b.onclick=()=>{const i=cart[+b.dataset.k];i.q+=+b.dataset.d;if(i.q<1)cart.splice(+b.dataset.k,1);save();draw()});
+  d.querySelectorAll(".qty button").forEach(b=>b.onclick=()=>{const i=cart[+b.dataset.k];i.q+=+b.dataset.d;{const mx=(PRODUCTS.find(p=>p.id===i.id).stock||{})[i.s];if(mx!=null&&i.q>mx)i.q=mx}if(i.q<1)cart.splice(+b.dataset.k,1);save();draw()});
   $("#go")&&($("#go").onclick=()=>{step="form";draw()});
  }
  if(step==="form"){
@@ -159,11 +161,15 @@ function draw(){
   const upd=()=>{const e=d.querySelector("input[name=e]:checked").value;$("#ad").style.display=e==="envio"?"block":"none";$("#tt").textContent=fmt(total()+(e==="envio"?CFG.envio:0))};
   d.querySelectorAll("input[name=e]").forEach(r=>r.onchange=upd);
   $("#bk").onclick=()=>{step="cart";draw()};
-  $("#ok").onclick=()=>{
+  $("#ok").onclick=async()=>{
    const e=d.querySelector("input[name=e]:checked").value,nm=$("#nm").value.trim(),tl=$("#tl").value.trim(),dir=$("#dir").value.trim();
    if(!nm||tl.replace(/\D/g,"").length<8||(e==="envio"&&!dir)){$("#er").textContent="Completá nombre, un teléfono válido y la dirección si pedís envío.";return}
-   order={no:"WEM-"+Math.floor(1000+Math.random()*9000),nm,tl,e,dir,tot:total()+(e==="envio"?CFG.envio:0),items:cart.map(i=>`• ${i.q}x ${PRODUCTS.find(p=>p.id===i.id).n} (talle ${i.s})`).join("\n")};
-   sb.from("orders").insert({order_no:order.no,customer_name:nm,phone:tl,delivery:e,address:dir||null,items:cart.map(i=>({id:i.id,name:PRODUCTS.find(p=>p.id===i.id).n,size:i.s,qty:i.q})),total:order.tot}).then(()=>{},()=>{});cart=[];save();step="done";draw();
+   const items=cart.map(i=>`• ${i.q}x ${PRODUCTS.find(p=>p.id===i.id).n} (talle ${i.s})`).join("\n");
+   const btn=$("#ok");btn.disabled=true;btn.textContent="Registrando pedido…";
+   const r=await sb.rpc("place_order",{p_name:nm,p_phone:tl,p_delivery:e,p_address:dir||null,p_items:cart.map(i=>({id:i.id,size:i.s,qty:i.q}))});
+   if(r.error){btn.disabled=false;btn.textContent="Confirmar pedido";$("#er").textContent=(/stock|disponible/i.test(r.error.message)?r.error.message:"No pudimos registrar el pedido. Probá de nuevo.")+" Revisá tu carrito.";await loadData();return}
+   order={no:r.data.order_no,nm,tl,e,dir,tot:r.data.total,items};
+   cart=[];save();await loadData();step="done";draw();
   };
  }
  if(step==="done"){
@@ -175,13 +181,13 @@ function draw(){
 }
 $("#open").onclick=()=>{if(step==="done")step="cart";draw();openDr()};
 $("#ov").onclick=closeDr;
-(async()=>{try{
+async function loadData(){try{
  const [pr,st]=await Promise.all([sb.from("products").select("*").eq("active",true).order("featured",{ascending:false}).order("id",{ascending:false}),sb.from("settings").select("*").eq("id",1).single()]);
  if(st.data)CFG={whatsapp:st.data.whatsapp,alias:st.data.alias,cvu:st.data.cvu,titular:st.data.holder,envio:st.data.shipping_cost};
  if(pr.data&&pr.data.length)PRODUCTS=pr.data.map(r=>({id:r.id,n:r.name,c:r.category,p:r.price,a:"#52C842",b:"#000",img:(r.images||[])[0],stock:r.stock}));
 }catch(e){}
-cart=cart.filter(i=>PRODUCTS.some(p=>p.id===i.id));save();
-renderCats();renderGrid();draw();})();
+cart=cart.filter(i=>PRODUCTS.some(p=>p.id===i.id));save();renderCats();renderGrid();}
+loadData().then(draw);
 </script>
 </body>
 </html>
