@@ -43,13 +43,14 @@ label{display:block;margin:12px 0 4px;color:var(--mut);font-size:13px}
 <script>
 const sb=supabase.createClient("https://egtrzvgzairnzclowkxz.supabase.co","sb_publishable_4EwkRJ0C1144cWq0etEdEQ_t6Jf6VRM");
 const $=s=>document.querySelector(s),fmt=v=>"$"+Number(v).toLocaleString("es-AR");
+const PANEL_EMAIL="rvdxronnie@gmail.com";
 const SZ=["S","M","L","XL"],STAT=["pendiente","pagado","enviado","entregado","cancelado"];
 let tab="p",ed=null,app$=$("#app");
 
 async function boot(){const{data:{session}}=await sb.auth.getSession();session?shell():login()}
 function login(){
- app$.innerHTML=`<div class="box"><h1>Panel Wembley</h1><label for="em">Email</label><input id="em" type="email" autocomplete="username"><label for="pw">Contraseña</label><input id="pw" type="password" autocomplete="current-password"><p class="er" id="er"></p><button class="btn" id="in">Entrar</button></div>`;
- const go=async()=>{const{error}=await sb.auth.signInWithPassword({email:$("#em").value.trim(),password:$("#pw").value});error?$("#er").textContent="Email o contraseña incorrectos.":shell()};
+ app$.innerHTML=`<div class="box"><h1>Panel Wembley</h1><label for="pw">Contraseña del panel</label><input id="pw" type="password" autocomplete="current-password" autofocus><p class="er" id="er"></p><button class="btn" id="in">Entrar</button></div>`;
+ const go=async()=>{const{error}=await sb.auth.signInWithPassword({email:PANEL_EMAIL,password:$("#pw").value});error?$("#er").textContent="Contraseña incorrecta.":shell()};
  $("#in").onclick=go;$("#pw").onkeydown=e=>e.key==="Enter"&&go();
 }
 function shell(){
