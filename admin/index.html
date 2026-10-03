@@ -46,6 +46,9 @@ const sb=supabase.createClient("https://egtrzvgzairnzclowkxz.supabase.co","sb_pu
 const $=s=>document.querySelector(s),fmt=v=>"$"+Number(v).toLocaleString("es-AR");
 const PANEL_EMAIL="rvdxronnie@gmail.com";
 const SZ=["S","M","L","XL"],STAT=["pendiente","pagado","enviado","entregado","cancelado"];
+const draft=()=>{try{localStorage.setItem("wem_draft",JSON.stringify(ed))}catch(e){}};
+const clr=()=>{try{localStorage.removeItem("wem_draft")}catch(e){}};
+function shrink(f){return new Promise(r=>{const i=new Image(),u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,1200/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(b=>r(b||f),"image/jpeg",.85)};i.onerror=()=>r(f);i.src=u})}
 let tab="p",ed=null,app$=$("#app");
 
 async function boot(){const{data:{session}}=await sb.auth.getSession();session?shell():login()}
@@ -56,8 +59,9 @@ function login(){
 }
 function shell(){
  app$.innerHTML=`<nav><b>WEMBLEY<i>.</i> panel</b><button class="tab" data-t="p">Productos</button><button class="tab" data-t="o">Pedidos</button><button class="tab" data-t="s">Ajustes</button><button class="tab" id="out">Salir</button></nav><main id="m"></main>`;
- document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;ed=null;view()});
- $("#out").onclick=async()=>{await sb.auth.signOut();login()};
+ document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{tab=b.dataset.t;ed=null;clr();view()});
+ $("#out").onclick=async()=>{clr();await sb.auth.signOut();login()};
+ try{const d=JSON.parse(localStorage.getItem("wem_draft")||"null");if(d){ed=d;tab="p"}}catch(e){}
  view();
 }
 function view(){
@@ -68,6 +72,7 @@ function view(){
 /* ---------- Productos ---------- */
 async function prods(){
  if(ed)return form();
+ clr();
  const{data,error}=await sb.from("products").select("*").order("id",{ascending:false});
  if(error)return $("#m").innerHTML=`<p class="er">No se pudieron cargar los productos: ${error.message}</p>`;
  $("#m").innerHTML=`<h2>Productos</h2><button class="btn" id="new" style="margin:0 0 14px">+ Nuevo producto</button>`+(data.length?data.map(p=>`<div class="row ${p.active?"":"off"}">${p.images?.[0]?`<img src="${p.images[0]}" alt="">`:`<div class="ph"></div>`}<div class="t"><b>${p.name}</b><small>${p.category} · ${fmt(p.price)} · Stock: ${SZ.map(s=>s+" "+(p.stock?.[s]||0)).join(", ")}${p.active?"":" · Oculto"}</small></div><button class="btn sec" style="margin:0" data-e="${p.id}">Editar</button></div>`).join(""):`<p>Todavía no cargaste productos. Tocá "Nuevo producto" para empezar.</p>`);
@@ -88,6 +93,10 @@ function form(){
  <label class="chk"><input id="ac" type="checkbox" ${p.active?"checked":""}>Visible en la tienda</label>
  <p class="er" id="er"></p>
  <button class="btn" id="sv">Guardar</button> <button class="btn sec" id="cn">Cancelar</button> ${p.id?`<button class="btn del" id="dl">Eliminar</button>`:""}`;
+ $("#m").oninput=()=>{if(ed&&$("#nm")){keep();draft()}};
+ $("#fi").onchange=async e=>{keep();const er=$("#er");er.style.color="#52C842";er.textContent="Subiendo foto…";let k=0;
+  for(const f of e.target.files){const b=await shrink(f),path=Date.now()+"-"+(k++)+".jpg";const{error}=await sb.storage.from("products").upload(path,b,{contentType:b.type||"image/jpeg"});if(error){er.style.color="";er.textContent="No se pudo subir la foto: "+error.message;return}ed.images.push(sb.storage.from("products").getPublicUrl(path).data.publicUrl)}
+  draft();form()};
  document.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{keep();p.images.splice(+b.dataset.r,1);form()});
  $("#cn").onclick=()=>{ed=null;prods()};
  $("#sv").onclick=save;
