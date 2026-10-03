@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wembley Indumentaria</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Caveat:wght@600&family=Montserrat:ital,wght@0,400;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#121212;--bg2:#1c1c1c;--g:#52C842;--y:#EAB308;--w:#fff;--mut:#a8a8a8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--w);font:400 16px/1.5 Montserrat,system-ui,sans-serif}
+h1,h2,h3{font-family:Anton,Impact,sans-serif;font-weight:400;text-transform:uppercase;margin:0;line-height:1;transform:skewX(-6deg)}
+.script{font-family:Caveat,cursive;font-weight:600;color:var(--g)}
+a{color:inherit}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--y);outline-offset:2px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;display:flex;align-items:center;justify-content:space-between;padding:12px 5vw;background:#000;border-bottom:3px solid var(--g)}
+.logo{font-family:Anton,sans-serif;font-size:26px;letter-spacing:1px;transform:skewX(-6deg)}
+.logo b{color:var(--g);font-weight:400}
+.cartbtn{background:var(--g);color:#000;border:0;border-radius:999px;padding:8px 18px;font-weight:600}
+.hero{position:relative;padding:12vh 5vw 10vh;background:radial-gradient(ellipse at 80% 0,rgba(82,200,66,.35),transparent 60%),linear-gradient(#000,var(--bg));overflow:hidden}
+.hero h1{font-size:clamp(56px,13vw,150px);max-width:11ch}
+.hero h1 span{color:var(--g)}
+.hero p{font-size:clamp(24px,4vw,36px);margin:14px 0 24px}
+.cta{display:inline-block;background:var(--g);color:#000;font-weight:600;text-decoration:none;padding:14px 28px;border:0;border-radius:4px}
+.medal{position:absolute;right:6vw;bottom:8vh;width:clamp(90px,16vw,170px);transform:rotate(12deg)}
+section{padding:48px 5vw}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:22px 0}
+.chip{background:transparent;color:var(--w);border:2px solid #444;border-radius:999px;padding:6px 16px}
+.chip[aria-pressed=true]{background:var(--w);color:#000;border-color:var(--w)}
+input,select{width:100%;background:var(--bg2);color:var(--w);border:2px solid #444;border-radius:4px;padding:10px;font:inherit}
+.bar input{max-width:260px;margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:26px}
+.card{background:var(--w);color:#000;padding:14px;border-radius:2px;
+ -webkit-mask:radial-gradient(circle 6px at 6px 6px,#0000 98%,#000) -6px -6px/12px 12px;mask:radial-gradient(circle 6px at 6px 6px,#0000 98%,#000) -6px -6px/12px 12px;
+ transform:rotate(var(--r));transition:transform .2s}
+.card:hover{transform:rotate(0) translateY(-4px)}
+.card:nth-child(odd){--r:-1.2deg}.card:nth-child(even){--r:1deg}
+.pic{aspect-ratio:1;border-radius:2px;display:grid;place-items:center}
+.pic svg{width:70%}
+.card h3{font-size:22px;margin:12px 0 2px;transform:none}
+.price{font-weight:600}
+.card .row{display:flex;gap:8px;margin-top:10px}
+.card select{background:#eee;color:#000;border-color:#ccc;padding:8px}
+.card .add{background:#000;color:var(--g);border:0;border-radius:4px;padding:0 14px;font-weight:600;white-space:nowrap}
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;background:var(--bg2)}
+.info h3{font-size:24px;color:var(--g);margin-bottom:6px}
+.info p{margin:0;color:var(--mut)}
+footer{padding:30px 5vw;text-align:center;color:var(--mut);border-top:3px solid var(--g)}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;z-index:8}
+#ov.on{display:block}
+#dr{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--bg);z-index:9;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px));overflow-y:auto;transform:translateX(100%);transition:transform .25s;border-left:3px solid var(--g)}
+#dr.on{transform:none}
+#dr h2{font-size:34px;margin-bottom:14px}
+.close{float:right;background:none;border:0;color:var(--w);font-size:30px;line-height:1}
+.line{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid #333}
+.line .t{flex:1}
+.line small{color:var(--mut);display:block}
+.qty button{background:#333;color:var(--w);border:0;width:28px;height:28px;border-radius:4px}
+.tot{display:flex;justify-content:space-between;font-size:22px;margin:16px 0;font-weight:600}
+label{display:block;margin:12px 0 4px;font-size:14px;color:var(--mut)}
+.ship{display:flex;gap:10px}
+.ship label{flex:1;margin:0;border:2px solid #444;border-radius:4px;padding:10px;color:var(--w);cursor:pointer}
+.ship input{width:auto;margin-right:6px}
+.pay{background:var(--bg2);border:2px dashed var(--g);border-radius:6px;padding:14px;margin:12px 0}
+.pay .k{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #333}
+.pay .k:last-child{border:0}
+.pay code{color:var(--g);word-break:break-all}
+.pay button{background:var(--w);color:#000;border:0;border-radius:4px;padding:6px 12px;font-weight:600}
+.ok{color:var(--g)!important}
+.wa{display:block;text-align:center;background:#25D366;color:#000;font-weight:600;text-decoration:none;padding:14px;border-radius:4px;margin-top:10px}
+.empty{color:var(--mut);padding:20px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">WEMBLEY<b>.</b></div>
+  <button class="cartbtn" id="open">Carrito (<span id="n">0</span>)</button>
+</header>
+
+<div class="hero">
+  <h1>Vestí la <span>pasión</span> de tu cancha</h1>
+  <p class="script">Indumentaria deportiva · Navarro, Buenos Aires</p>
+  <a class="cta" href="#catalogo">Ver productos</a>
+  <svg class="medal" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="60" r="28" fill="#EAB308" stroke="#000" stroke-width="4"/><path d="M50 42l5 11 12 1-9 8 3 12-11-6-11 6 3-12-9-8 12-1z" fill="#fff" stroke="#000" stroke-width="3"/><path d="M34 6l10 26M66 6L56 32" stroke="#52C842" stroke-width="9"/></svg>
+</div>
+
+<section id="catalogo">
+  <h2 style="font-size:clamp(36px,7vw,64px)">Catálogo</h2>
+  <div class="bar" id="cats"></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section class="info">
+  <div><h3>Envíos</h3><p>Retiro en Navarro o envío a domicilio. Coordinamos por WhatsApp.</p></div>
+  <div><h3>Pago por transferencia</h3><p>Te mostramos alias y CVU con botón de copiar. Sin errores.</p></div>
+  <div><h3>Cambios</h3><p>Si el talle no te va, lo cambiamos. Consultanos.</p></div>
+</section>
+<footer>© Wembley Indumentaria · Navarro</footer>
+
+<div id="ov"></div>
+<aside id="dr" aria-label="Carrito"></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ===== CONFIG: lo que después edita el cliente desde el panel ===== */
+const sb=window.supabase.createClient("https://egtrzvgzairnzclowkxz.supabase.co","sb_publishable_4EwkRJ0C1144cWq0etEdEQ_t6Jf6VRM");
+let CFG={whatsapp:"5492227000000",alias:"WEMBLEY.INDUM",cvu:"0000000000000000000000",titular:"Wembley Indumentaria",envio:3500};
+let PRODUCTS=[
+ {id:1,n:"Camiseta Titular",c:"Camisetas",p:42000,a:"#52C842",b:"#000"},
+ {id:2,n:"Camiseta Retro 86",c:"Camisetas",p:45000,a:"#fff",b:"#52C842"},
+ {id:3,n:"Camiseta Arquero",c:"Camisetas",p:40000,a:"#EAB308",b:"#000"},
+ {id:4,n:"Short Match",c:"Shorts",p:22000,a:"#000",b:"#52C842"},
+ {id:5,n:"Short Training",c:"Shorts",p:19500,a:"#2b2b2b",b:"#fff"},
+ {id:6,n:"Campera Rompevientos",c:"Abrigo",p:68000,a:"#000",b:"#52C842"},
+ {id:7,n:"Buzo Canguro",c:"Abrigo",p:55000,a:"#52C842",b:"#fff"},
+ {id:8,n:"Medias Pro",c:"Accesorios",p:6500,a:"#fff",b:"#000"}
+];
+const $=s=>document.querySelector(s),fmt=v=>"$"+v.toLocaleString("es-AR");
+let cart=[],cat="Todos",step="cart",order=null;
+try{cart=JSON.parse(localStorage.getItem("wem_cart")||"[]")}catch(e){}
+const save=()=>{try{localStorage.setItem("wem_cart",JSON.stringify(cart))}catch(e){}};
+const shirt=(a,b)=>`<svg viewBox="0 0 100 100"><path d="M30 12L12 24l8 18 8-4v50h44V38l8 4 8-18-18-12q-20 14-40 0z" fill="${a}" stroke="#000" stroke-width="2.5"/><path d="M28 56h44v8H28z" fill="${b}"/></svg>`;
+
+function renderCats(){
+ const cs=["Todos",...new Set(PRODUCTS.map(p=>p.c))];
+ $("#cats").innerHTML=cs.map(c=>`<button class="chip" aria-pressed="${c===cat}" data-c="${c}">${c}</button>`).join("")+`<input id="q" placeholder="Buscar producto" aria-label="Buscar">`;
+ $("#q").oninput=renderGrid;
+ document.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{cat=b.dataset.c;renderCats();renderGrid()});
+}
+function renderGrid(){
+ const q=($("#q")?.value||"").toLowerCase();
+ const l=PRODUCTS.filter(p=>(cat==="Todos"||p.c===cat)&&p.n.toLowerCase().includes(q));
+ $("#grid").innerHTML=l.length?l.map(p=>`<div class="card"><div class="pic" style="background:#f1f1f1">${p.img?`<img src="${p.img}" alt="${p.n}" style="width:100%;height:100%;object-fit:cover">`:shirt(p.a,p.b)}</div><h3>${p.n}</h3><div class="price">${fmt(p.p)}</div><div class="row"><select aria-label="Talle" id="s${p.id}">${Object.entries(p.stock||{S:1,M:1,L:1,XL:1}).filter(([s,q])=>q>0).map(([s])=>`<option>${s}</option>`).join("")||"<option disabled>Sin stock</option>"}</select><button class="add" data-id="${p.id}">Agregar</button></div></div>`).join(""):`<p class="empty">No encontramos productos con esa búsqueda.</p>`;
+ document.querySelectorAll(".add").forEach(b=>b.onclick=()=>add(+b.dataset.id));
+}
+function add(id){
+ const s=$("#s"+id).value;if(!s||s==="Sin stock")return;const i=cart.find(x=>x.id===id&&x.s===s);
+ i?i.q++:cart.push({id,s,q:1});
+ save();step="cart";draw();openDr();
+}
+const total=()=>cart.reduce((t,i)=>t+PRODUCTS.find(p=>p.id===i.id).p*i.q,0);
+const openDr=()=>{$("#dr").classList.add("on");$("#ov").classList.add("on")};
+const closeDr=()=>{$("#dr").classList.remove("on");$("#ov").classList.remove("on");if(step==="done"){step="cart";draw()}};
+
+function draw(){
+ $("#n").textContent=cart.reduce((t,i)=>t+i.q,0);
+ const d=$("#dr"),x=`<button class="close" aria-label="Cerrar" id="x">×</button>`;
+ if(step==="cart"){
+  d.innerHTML=x+`<h2>Tu carrito</h2>`+(cart.length?cart.map((i,k)=>{const p=PRODUCTS.find(p=>p.id===i.id);return `<div class="line"><div class="t">${p.n}<small>Talle ${i.s} · ${fmt(p.p)}</small></div><div class="qty"><button data-k="${k}" data-d="-1" aria-label="Menos">−</button> ${i.q} <button data-k="${k}" data-d="1" aria-label="Más">+</button></div></div>`}).join("")+`<div class="tot"><span>Subtotal</span><span>${fmt(total())}</span></div><button class="cta" style="width:100%" id="go">Continuar con la compra</button>`:`<p class="empty">Todavía no agregaste nada. Elegí un producto del catálogo.</p>`);
+  d.querySelectorAll(".qty button").forEach(b=>b.onclick=()=>{const i=cart[+b.dataset.k];i.q+=+b.dataset.d;if(i.q<1)cart.splice(+b.dataset.k,1);save();draw()});
+  $("#go")&&($("#go").onclick=()=>{step="form";draw()});
+ }
+ if(step==="form"){
+  d.innerHTML=x+`<h2>Tus datos</h2><label for="nm">Nombre y apellido</label><input id="nm" autocomplete="name"><label for="tl">Teléfono</label><input id="tl" type="tel" autocomplete="tel"><label>Cómo lo recibís</label><div class="ship"><label><input type="radio" name="e" value="retiro" checked>Retiro en Navarro</label><label><input type="radio" name="e" value="envio">Envío (+${fmt(CFG.envio)})</label></div><div id="ad" style="display:none"><label for="dir">Dirección y localidad</label><input id="dir" autocomplete="street-address"></div><div class="tot"><span>Total</span><span id="tt">${fmt(total())}</span></div><p id="er" style="color:#ff6b6b;margin:0 0 8px"></p><button class="cta" style="width:100%" id="ok">Confirmar pedido</button><button class="chip" style="margin-top:10px" id="bk">Volver al carrito</button>`;
+  const upd=()=>{const e=d.querySelector("input[name=e]:checked").value;$("#ad").style.display=e==="envio"?"block":"none";$("#tt").textContent=fmt(total()+(e==="envio"?CFG.envio:0))};
+  d.querySelectorAll("input[name=e]").forEach(r=>r.onchange=upd);
+  $("#bk").onclick=()=>{step="cart";draw()};
+  $("#ok").onclick=()=>{
+   const e=d.querySelector("input[name=e]:checked").value,nm=$("#nm").value.trim(),tl=$("#tl").value.trim(),dir=$("#dir").value.trim();
+   if(!nm||tl.replace(/\D/g,"").length<8||(e==="envio"&&!dir)){$("#er").textContent="Completá nombre, un teléfono válido y la dirección si pedís envío.";return}
+   order={no:"WEM-"+Math.floor(1000+Math.random()*9000),nm,tl,e,dir,tot:total()+(e==="envio"?CFG.envio:0),items:cart.map(i=>`• ${i.q}x ${PRODUCTS.find(p=>p.id===i.id).n} (talle ${i.s})`).join("\n")};
+   sb.from("orders").insert({order_no:order.no,customer_name:nm,phone:tl,delivery:e,address:dir||null,items:cart.map(i=>({id:i.id,name:PRODUCTS.find(p=>p.id===i.id).n,size:i.s,qty:i.q})),total:order.tot}).then(()=>{},()=>{});cart=[];save();step="done";draw();
+  };
+ }
+ if(step==="done"){
+  const msg=`Hola! Hice el pedido ${order.no}\n${order.items}\nTotal: ${fmt(order.tot)}\n${order.e==="envio"?"Envío a: "+order.dir:"Retiro en Navarro"}\nNombre: ${order.nm}\nYa realicé la transferencia, te paso el comprobante.`;
+  d.innerHTML=x+`<h2>Pedido ${order.no}</h2><p>Transferí <b class="ok">${fmt(order.tot)}</b> con estos datos y mandanos el comprobante por WhatsApp.</p><div class="pay"><div class="k"><span>Alias<br><code>${CFG.alias}</code></span><button data-v="${CFG.alias}">Copiar</button></div><div class="k"><span>CVU<br><code>${CFG.cvu}</code></span><button data-v="${CFG.cvu}">Copiar</button></div><div class="k"><span>Importe<br><code>${order.tot}</code></span><button data-v="${order.tot}">Copiar</button></div><div class="k"><span>Titular<br><code>${CFG.titular}</code></span></div></div><p style="color:var(--mut);font-size:14px">En el concepto poné <b>${order.no}</b> para identificar tu pago.</p><a class="wa" target="_blank" rel="noopener" href="https://wa.me/${CFG.whatsapp}?text=${encodeURIComponent(msg)}">Enviar comprobante por WhatsApp</a>`;
+  d.querySelectorAll(".pay button").forEach(b=>b.onclick=()=>{const done=()=>{b.textContent="¡Copiado!"};navigator.clipboard?.writeText(b.dataset.v).then(done,done)});
+ }
+ $("#x").onclick=closeDr;
+}
+$("#open").onclick=()=>{if(step==="done")step="cart";draw();openDr()};
+$("#ov").onclick=closeDr;
+(async()=>{try{
+ const [pr,st]=await Promise.all([sb.from("products").select("*").eq("active",true).order("featured",{ascending:false}).order("id",{ascending:false}),sb.from("settings").select("*").eq("id",1).single()]);
+ if(st.data)CFG={whatsapp:st.data.whatsapp,alias:st.data.alias,cvu:st.data.cvu,titular:st.data.holder,envio:st.data.shipping_cost};
+ if(pr.data&&pr.data.length)PRODUCTS=pr.data.map(r=>({id:r.id,n:r.name,c:r.category,p:r.price,a:"#52C842",b:"#000",img:(r.images||[])[0],stock:r.stock}));
+}catch(e){}
+cart=cart.filter(i=>PRODUCTS.some(p=>p.id===i.id));save();
+renderCats();renderGrid();draw();})();
+</script>
+</body>
+</html>
