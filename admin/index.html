@@ -49,9 +49,9 @@ let tab="p",ed=null,app$=$("#app");
 
 async function boot(){const{data:{session}}=await sb.auth.getSession();session?shell():login()}
 function login(){
- app$.innerHTML=`<div class="box"><h1>Panel Wembley</h1><label for="pw">Contraseña del panel</label><input id="pw" type="password" autocomplete="current-password" autofocus><p class="er" id="er"></p><button class="btn" id="in">Entrar</button></div>`;
- const go=async()=>{const{error}=await sb.auth.signInWithPassword({email:PANEL_EMAIL,password:$("#pw").value});error?$("#er").textContent="Contraseña incorrecta.":shell()};
- $("#in").onclick=go;$("#pw").onkeydown=e=>e.key==="Enter"&&go();
+ app$.innerHTML=`<div class="box"><h1>Panel Wembley</h1><label for="pw">Contraseña del panel</label><input id="pw" type="password" autocomplete="current-password"><label class="chk"><input type="checkbox" id="sh">Mostrar contraseña</label><p class="er" id="er"></p><button class="btn" id="in">Entrar</button></div>`;
+ const go=async()=>{const{error}=await sb.auth.signInWithPassword({email:PANEL_EMAIL,password:$("#pw").value});error?$("#er").textContent=/invalid login/i.test(error.message)?"Contraseña incorrecta, o el usuario no existe en Supabase con ese mail.":"Error: "+error.message:shell()};
+ $("#sh").onchange=e=>{$("#pw").type=e.target.checked?"text":"password"};$("#in").onclick=go;$("#pw").onkeydown=e=>e.key==="Enter"&&go();
 }
 function shell(){
  app$.innerHTML=`<nav><b>WEMBLEY<i>.</i> panel</b><button class="tab" data-t="p">Productos</button><button class="tab" data-t="o">Pedidos</button><button class="tab" data-t="s">Ajustes</button><button class="tab" id="out">Salir</button></nav><main id="m"></main>`;
